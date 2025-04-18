@@ -2,9 +2,19 @@ import json
 import pandas as pd
 from tqdm import tqdm  # 1. import tqdm
 
-# Step 1: Load your exported JSON
-with open('data/perm_krai_only.json', 'r', encoding='utf-8') as f:
+# # Step 1: Load your exported JSON
+# with open('input/perm_krai_only.json', 'r', encoding='utf-8') as f:
+#     data = json.load(f)  # expects a list of docs
+
+# output_path = 'output/perm_krai.csv'
+
+
+
+with open('input/job_forecast.hh_ru_jobs.json', 'r', encoding='utf-8') as f:
     data = json.load(f)  # expects a list of docs
+
+output_path = 'output/all_data.csv'
+
 
 # Step 2: Flatten each document safely, with a progress bar
 processed_data = []
@@ -54,7 +64,7 @@ cols = [
 ]
 df = df[[c for c in cols if c in df.columns]]
 
-output_path = 'output/perm_krai.csv'
+
 df.to_csv(output_path, index=False)
 
 print(f"Wrote {len(df)} jobs to {output_path}")
