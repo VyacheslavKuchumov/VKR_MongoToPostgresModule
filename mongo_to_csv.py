@@ -1,50 +1,50 @@
 import json
 import pandas as pd
+from tqdm import tqdm  # 1. import tqdm
 
-# Step 1: Load the JSON file
-# Replace 'exported_jobs.json' with your filename
-with open('exported_jobs.json', 'r', encoding='utf-8') as f:
-    data = json.load(f)  # expects a top‐level list of documents
+# Step 1: Load your exported JSON
+with open('data/perm_krai_only.json', 'r', encoding='utf-8') as f:
+    data = json.load(f)  # expects a list of docs
 
-# Step 2: Process and flatten each document
+# Step 2: Flatten each document safely, with a progress bar
 processed_data = []
-for doc in data:
+for doc in tqdm(data, desc="Processing jobs"):         # 2. wrap data in tqdm
     processed_doc = {
         "name": doc.get("name"),
-        "city": doc.get("area", {}).get("name"),
+        "city": (doc.get("area") or {}).get("name"),
         "area_name": doc.get("area_name"),
-        "salary_from": doc.get("salary", {}).get("from"),
-        "salary_to": doc.get("salary", {}).get("to"),
+        "salary_from": (doc.get("salary") or {}).get("from"),
+        "salary_to":   (doc.get("salary") or {}).get("to"),
         "url": doc.get("url"),
-        "employer_name": doc.get("employer", {}).get("name"),
-        "schedule_id": doc.get("schedule", {}).get("id"),
+        "employer_name": (doc.get("employer") or {}).get("name"),
+        "schedule_id":   (doc.get("schedule") or {}).get("id"),
         "working_days_id": (
-            doc.get("working_days", [{}])[0].get("id")
-            if doc.get("working_days") else None
+            (doc.get("working_days") or [{}])[0].get("id")
+            if doc.get("working_days") is not None else None
         ),
         "working_time_intervals_id": (
-            doc.get("working_time_intervals", [{}])[0].get("id")
-            if doc.get("working_time_intervals") else None
+            (doc.get("working_time_intervals") or [{}])[0].get("id")
+            if doc.get("working_time_intervals") is not None else None
         ),
         "working_time_modes_id": (
-            doc.get("working_time_modes", [{}])[0].get("id")
-            if doc.get("working_time_modes") else None
+            (doc.get("working_time_modes") or [{}])[0].get("id")
+            if doc.get("working_time_modes") is not None else None
         ),
         "professional_roles_name": (
-            doc.get("professional_roles", [{}])[0].get("name")
-            if doc.get("professional_roles") else None
+            (doc.get("professional_roles") or [{}])[0].get("name")
+            if doc.get("professional_roles") is not None else None
         ),
-        "experience_id": doc.get("experience", {}).get("id"),
-        "employment_id": doc.get("employment", {}).get("id"),
+        "experience_id": (doc.get("experience") or {}).get("id"),
+        "employment_id": (doc.get("employment") or {}).get("id"),
         "entry_date": doc.get("entry_date")
     }
     processed_data.append(processed_doc)
 
-# Step 3: Create DataFrame and export
+# Step 3: Build DataFrame and write to CSV
 df = pd.DataFrame(processed_data)
 
-# Optional: reorder columns if you like
-column_order = [
+# If you want a specific column order:
+cols = [
     "name", "city", "area_name",
     "salary_from", "salary_to",
     "employer_name", "schedule_id",
@@ -52,9 +52,9 @@ column_order = [
     "professional_roles_name", "experience_id", "employment_id",
     "entry_date", "url"
 ]
-df = df[column_order]
+df = df[[c for c in cols if c in df.columns]]
 
-# Step 4: Write to Excel
-output_path = 'jobs.xlsx'
-df.to_excel(output_path, index=False)
-print(f"Written {len(df)} records to {output_path}")
+output_path = 'output/perm_krai.csv'
+df.to_csv(output_path, index=False)
+
+print(f"Wrote {len(df)} jobs to {output_path}")
